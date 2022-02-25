@@ -65,25 +65,24 @@ def add_Passenger_To_Bus():
 
 #nombre de places dispo dans bus
 def places_Dispo_Dans_Bus(bus):
-    if listeBus.get(bus):
-        designedBus = listeBus[bus]
-        places = designedBus['taille'] - designedBus['placesOccupees'] - 1      #place du conducteur
-        print(f'Le Bus numero "{bus}" a {places} places disponibles.')
-    else:
-        print('Vous n\'avez pas ce bus dans votre flotte.')
+    designedBus = listeBus[bus]
+    places = designedBus['taille'] - designedBus['placesOccupees'] - 1      #place du conducteur
+    return places
 
 #nombre de kg reserve
 #Additionner les masses des bagages de ses passagers.
-def Kilos_Reserve_Dans_Bus(bus):
-    if listeBus.get(bus):
-        designedBus = listeBus[bus]
-        kilos = 0
-        for x in designedBus['listePassagers']:
-            #aller dans la liste des passager et recuperer le poid de bagage du passager 'x' correspondant
-            kilos += listePassagers[x]['poidBagage']    
-        print(f'Le Bus numero "{bus}" a deja {kilos}kg de bagages en soutte.')
-    else:
-        print('Vous n\'avez pas ce bus dans votre flotte.')
+def kilos_Reserve_Dans_Bus(bus):
+    designedBus = listeBus[bus]
+    kilos = 0
+    for x in designedBus['listePassagers']:
+        #aller dans la liste des passager et recuperer le poid de bagage du passager 'x' correspondant
+        kilos += listePassagers[x]['poidBagage']    
+    return kilos
+
+#nombre de kg disponible
+def kilos_Disponible_Dans_Bus(bus):
+    designedBus = listeBus[bus]   
+    return float(designedBus['chargeMax']) - kilos_Reserve_Dans_Bus(bus)
 
 #retirer un passager d'un bus
 #retirer le numero du passager dans la liste des passagers du bus
@@ -100,6 +99,16 @@ def retirer_Passager(bus):
         print('Vous n\'avez pas ce bus dans votre flotte.')
 
 # savoir si un bus peut acceuillir les passagers venant d'un autre bus
+#verifier que les places disponibles dans le bus d'acceuil est supperieur aux places vides du bus defaillant   
+def verifie_Transferabilite(busAcceuil,busDefaillant):
+    if places_Dispo_Dans_Bus(busAcceuil) > listeBus[busDefaillant]['placesOccupees']: 
+        if kilos_Disponible_Dans_Bus(busAcceuil) > kilos_Reserve_Dans_Bus(busDefaillant):
+            print('Oui, Le transfert est possible')
+        else:
+            print('Non, Il ne reste plus assez de place en soutte.')
+    else:
+        print('Non, Il ne reste plus assez de place dans ce bus.')
+
 
 #afficher la liste des passagers d'un bus
 #parcourir la liste des passagers du bus en question et afficher leur informations recuperrees dans la liste des passagers.
@@ -114,16 +123,28 @@ def affiche_Passagers_Du_Bus(bus):
 
 #afficher l'ensemble des passagers de la flotte
 def affiche_passagers_flotte():
-    print('\n Passagers de la flotte groupe par bus: ')
+    print('\n Passagers de la flotte: ')
+    #print('\n Passagers de la flotte groupe par bus: ')
+    #for key in listeBus:
+    #    affiche_Passagers_Du_Bus(key)
+    for key in listePassagers:
+        print(listePassagers[key])
+
+#afficher l'ensemble des bus de la flotte
+def affiche_Bus_flotte():
+    print('\n Bus de la flotte: ')
     for key in listeBus:
-        affiche_Passagers_Du_Bus(key)
+        print(listeBus[key])
 
 #savoir si un passager est enregistre sur un bus, le cas echeant, afficher les details du bus
 def etat_Passager(bus):
     if listeBus.get(bus):
         passager = input('Quel est le numero de cni du passager a verifier? (exemple 114850326): ')
         if listePassagers.get(passager):
-            print(f'Il s\'agit bien d\'un passager du bus {bus} \n {listePassagers[passager]}')
+            if bus['listePassagers'].get(passager):
+                print(f'Il s\'agit bien d\'un passager du bus {bus} \n {listePassagers[passager]}')
+            else:
+                print(f'{passager} n\'est pas passager du bus {bus}.')
         else:
             print('Veuillez d\'abord creer ce passager.')
     else:
@@ -134,8 +155,8 @@ while True:
     print('''
     ********************************************************************
     ***********   BUS TRAVEL COMPANY MANAGEMENT BY RESTART   ***********
-    **********                   MAIN MENU                    **********
-    ********  (Enter the item number to select or [0] to exit)  ********
+    *********                    MAIN MENU                     *********
+    *******   (Enter the item number to select or [0] to exit)   *******
     *****       1- Create a bus                                    *****
     *****       2- Create a passenger                              *****
     *****       3- Add a passenger to a bus                        *****
@@ -147,51 +168,65 @@ while True:
     *****       9- Show the global list of passengers              *****
     *****      10- Test if a passenger is in a bus and show        *****
                     passenger details   ''')
-    option = int(input('Make your choice: '))
-
-    if (option == 0):
+    option = input('Make your choice: ')
+    
+    if (option == '0'):
         break
-    elif (option == 1):
+    elif (option == '1'):
         create_Bus()
         input('Press Enter to continue')
-    elif(option == 2):
+    elif(option == '2'):
         create_Passager()
         input('Press Enter to continue')
-    elif(option == 3):
+    elif(option == '3'):
         add_Passenger_To_Bus()
         input('Press Enter to continue')
-    elif(option == 4):
+    elif(option == '4'):
         print('\n')
         bus = input('De quel bus voulez-vous les places ? (Exemple LT 333 DG): ').upper()
-        places_Dispo_Dans_Bus(bus)
+        if listeBus.get(bus):
+            places = places_Dispo_Dans_Bus(bus)
+            print(f'Le Bus numero "{bus}" a {places} places disponibles.')
+        else:
+            print('Vous n\'avez pas ce bus dans votre flotte.')
         input('Press Enter to continue')
-    elif(option == 5):
+    elif(option == '5'):
         print('\n')
         bus = input('De quel bus voulez-vous le poid des bagages en soutte ? (Exemple LT 333 DG): ').upper()
-        Kilos_Reserve_Dans_Bus(bus)
+        if listeBus.get(bus):
+            kilos = kilos_Reserve_Dans_Bus(bus)
+            print(f'Le Bus numero "{bus}" a deja {kilos}kg de bagages en soutte.')
+        else:
+            print('Vous n\'avez pas ce bus dans votre flotte.')
         input('Press Enter to continue')
-    elif(option == 6):
+    elif(option == '6'):
         print('\n')
         bus = input('De quel bus voulez-vous retirer un passager ? (Exemple LT 333 DG): ').upper()
         retirer_Passager(bus)
         input('Press Enter to continue')
-    elif(option == 7):
+    elif(option == '7'):
         print('\n')
-        pass
+        bus1 = input('Dans quel bus voulez-vous transferer les passagers ? (Exemple LT 333 DG): ').upper()
+        bus2 = input('De quel bus viennent ces passagers ? (Exemple LT 333 DG): ').upper()
+        verifie_Transferabilite(bus1,bus2)
         input('Press Enter to continue')
-    elif(option == 8):
+    elif(option == '8'):
         print('\n')
         bus = input('De quel bus voulez-vous avoir la liste de passagers ? (Exemple LT 333 DG): ').upper()
         affiche_Passagers_Du_Bus(bus)
         input('Press Enter to continue')    
-    elif(option == 9):
+    elif(option == '9'):
         print('\n')
         affiche_passagers_flotte()
         input('Press Enter to continue')    
-    elif(option == 10):
+    elif(option == '11'):
+        print('\n')
+        affiche_Bus_flotte()
+        input('Press Enter to continue')    
+    elif(option == '10'):
         print('\n')
         bus = input('Dans quel bus voulez-vous verifier l\'enregistrement du passagers ? (Exemple LT 333 DG): ').upper()
         etat_Passager(bus)
         input('Press Enter to continue')    
     else:
-        print('choix Invalide!')
+        print('\n Choix Invalide!')
